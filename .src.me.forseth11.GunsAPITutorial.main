@@ -1,0 +1,100 @@
+package me.forseth11.GunsAPITutorial;
+
+import java.util.logging.Logger;
+
+
+import me.forseth11.GunsAPI.BulletType;
+import me.forseth11.GunsAPI.GunHitEntityEvent;
+import me.forseth11.GunsAPI.GunHitEvent;
+
+import me.forseth11.GunsAPI.GunsAPI;
+
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.entity.Chicken;
+import org.bukkit.entity.Cow;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class main extends JavaPlugin implements Listener{
+	public static main plugin;
+	public final Logger logger = Logger.getLogger("Minecraft");
+	
+	
+	@Override
+	public void onDisable(){
+		
+	}
+	
+	@Override
+	public void onEnable(){
+	
+		GunsAPI gun = (GunsAPI) Bukkit.getPluginManager().getPlugin("GunsAPI");
+		gun.setEnderPearlTeleportCancel(true);
+		gun.setExplosionCancel(false);
+		
+		PluginManager m = this.getServer().getPluginManager();
+		//m.registerEvents(new [SOMETHING](this), this);
+		m.registerEvents(this, this);
+	}
+	
+	@EventHandler
+	public void shoot(PlayerInteractEvent event){
+		if(event.getAction().equals(Action.RIGHT_CLICK_AIR)){
+			if(event.getPlayer().getItemInHand()!= null){
+				GunsAPI gun = (GunsAPI) Bukkit.getPluginManager().getPlugin("GunsAPI");
+				if(event.getPlayer().getItemInHand().getType().equals(Material.STONE)){
+					gun.shootGun(3, event.getPlayer(), event.getPlayer().getLocation().getDirection().multiply(5), BulletType.SNOWBALL, true);
+				}
+				if(event.getPlayer().getItemInHand().getType().equals(Material.ARROW)){
+					gun.shootRPG(5, event.getPlayer(), event.getPlayer().getLocation().getDirection().multiply(2), BulletType.ARROW, 3, true);
+				}
+				if(event.getPlayer().getItemInHand().getType().equals(Material.GRASS)){
+					gun.shootGrenade(2, event.getPlayer(), event.getPlayer().getLocation().getDirection().multiply(1.5), BulletType.ENDER_PEARL, 2, true);
+				}
+				if(event.getPlayer().getItemInHand().getType().equals(Material.COBBLESTONE)){
+					gun.shootShootgun(3, event.getPlayer(), event.getPlayer().getLocation().getDirection().multiply(1.5), BulletType.EGG, 5, true);
+				}
+			}
+		}
+	}
+	
+	@EventHandler
+	public void hit(GunHitEvent event){
+		Cow e = (Cow) event.getBullet().getWorld().spawnEntity(event.getBullet().getLocation(), EntityType.COW);
+		e.setAdult();
+		e.setCustomName("GunAPI generated cow");
+		e.setTarget(event.getShooter());
+		event.getShooter().sendMessage("Called GunHitEvent");
+		event.setExplosion(0);
+	}
+	
+	@EventHandler
+	public void hitEntity(GunHitEntityEvent event){
+		if(event.getEntity() instanceof Chicken){
+			event.getShooter().sendMessage("[GunsAPI] DO NOT KILL MY CHICKEN!");
+			event.setCancelled(true);
+			return;
+		}
+		if(event.getDamage() > 4){
+			event.setExplosion(5);
+		}
+		if(event.getShooter().isFlying()){
+			event.getShooter().sendMessage("[GunsAPI] Why is your flying enabled!");
+		}
+		if(event.getShooter().getGameMode().equals(GameMode.CREATIVE)){
+			event.getShooter().setGameMode(GameMode.SURVIVAL);
+			event.getShooter().sendMessage("[GunsAPI] WHY ARE YOU IN GAMEMODE! BYE BYE!");
+			event.getShooter().damage(event.getDamage());
+			event.setCancelled(true);
+		}
+		event.getShooter().sendMessage("[GunsAPI] GunHitEntityEvent called!");
+	}
+}
